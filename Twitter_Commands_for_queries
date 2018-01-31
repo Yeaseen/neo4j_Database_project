@@ -1,0 +1,109 @@
+
+#find a node using  starts or ends clause 
+match (a:User) where a.name="KMarsh" return a
+
+match (a:User) where a.name starts with "KM" return a.name,a.followers,a.location
+
+
+#all users name and tweets time and id
+match (tweets:Tweet) <- [r:POSTS] - (user:User) 
+return user.name, tweets.created_at,tweets.id
+
+#total_posts by "KMarsh"
+match (tweets:Tweet) <- [r:POSTS] - (user:User {name:"KMarsh"}) return count(r)
+
+#total_posts_by_users
+match (tweets:Tweet) <- [r:POSTS] - (user:User) return count(r)
+
+#post_count according to user name
+match (tweets:Tweet) <- [r:POSTS] - (user:User) return user.name, count(r) as post_count order by post_count desc
+
+
+#all users name and tweets id and times given by users and the user2 who was mentioned
+match (tweets:Tweet) <- [r:POSTS] - (user:User) , (tweets) -[mentions:MENTIONS] ->(user2:User) 
+return user.name, tweets.created_at,tweets.id,user2.name
+
+match  (user2:User) <-[mentions:MENTIONS] - (tweets:Tweet) <- [r:POSTS] - (user:User) , (tweets)  
+return user.name, tweets.created_at,tweets.id,user2.name
+
+
+
+#searching for max followers number among all the users
+
+match (a:User) return max(a.followers)
+
+#the name of the user who has max followers.
+
+match (b:User)
+with max(b.followers) as mx
+match (a:User)
+where a.followers=mx
+return a.name,a.followers
+
+
+
+
+#searching a relation between two nodes and return them
+match (a:Tweet {id:491300370262413312})-[r:MENTIONS]-> (b:User {name:"Dev9"}) return a,b
+match p=()-[r:CONTAINS]->() return p, count(*) LIMIT 25
+
+
+
+
+#most_tagged Hashtag and how many times by a user who has maximum followers 
+match (b:User)
+with max(b.followers) as mx
+match (a:User)
+where a.followers=mx
+with a.name as fk
+match (h:Hashtag)-[:TAGS]->(t:Tweet) <-[:POSTS]-(user:User {name:fk}) 
+with h, count(h) as Hashtags
+order by Hashtags desc
+return h.name,Hashtags
+
+
+#most_tagged Hashtag and how many times by a user
+
+match (h:Hashtag)-[:TAGS]->(t:Tweet) <-[:POSTS]-(user:User {name:"O'Reilly OSCON"}) 
+with h, count(h) as Hashtags
+order by Hashtags desc
+return h.name,Hashtags
+
+
+#top_mention of a user
+
+match (u:User)-[:POSTS]->(t:Tweet)-[:MENTIONS]->(m:User {name:"O'Reilly OSCON"})
+where u.name <> "O'Reilly OSCON"
+return u.name as user_name, count(u.name) as count
+order by count desc
+
+
+#which platform are users tweeting from most even?
+
+match (t:Tweet)->[:USING]->(s:Source)
+return s.name as Source, count(s) as Count
+order by Count desc
+
+
+#Which tweet has been retweeted the most, and who posted it?
+
+match (:Tweet) - [:RETWEETS] -> (t:Tweet)
+with t, count(*) as Retweets
+order by Retweets desc
+limit 1
+match (u:User)-[:POSTS]->(t)
+return u.name as Username,t.text as Tweet, Retweets
+
+
+#find the single shortest path between two users
+
+match (adamfazio:User { name: 'adamfazio' }),(Tyler_Fitch:User { name: 'Tyler Fitch' }), p = shortestPath((adamfazio)-[*..15]-(Tyler_Fitch))
+return p
+
+#find the all shortest paths between two users
+match (adamfazio:User { name: 'adamfazio' }),(Tyler_Fitch:User { name: 'Tyler Fitch' }), p = allShortestPaths((adamfazio)-[*]-(Tyler_Fitch))
+return p
+
+
+
+

@@ -1,0 +1,13 @@
+##1st
+
+session.run( "CREATE (a:Person1 {name:'Arthur', title:'King'})" );
+
+    StatementResult result = session.run( "MATCH (a:Person1) WHERE a.name = {name} " +
+                                      "RETURN a.name AS name, a.title AS title",
+        parameters( "name", "Arthur" ) );
+
+    while ( result.hasNext() ) {
+        Record record = result.next();
+        System.out.println( record.get( "title" ).asString() + 
+                                " " + record.get("name").asString() );
+    }
